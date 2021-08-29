@@ -1,0 +1,131 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .bgvb {
+        animation: vb 0.5s;
+    }
+    }
+</style>
+<script src="~/lib/aspnet/signalr/dist/browser/signalr.js"></script>
+<!-- (Developer version) -->
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<div id="app">
+    <div class="row">
+        <div class="col-md-6 col-sm-6">
+            <div class="card">
+                <h5 class="card-header">
+                    Tín hiệu mua bán
+                </h5>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="tech-companies-1-clone" class="table">
+                            <thead>
+                                <tr>
+                                    <th>MCK</th>
+                                    <th>Exchange</th>
+                                    <th class="text-right">Giá khớp</th>
+                                    <th class="text-right">Change(%)</th>
+                                    <th class="text-right">Volume</th>
+                                    <th class="text-right">Total Trading</th>
+                                    <th>M/B</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(item, index) in signals" v-bind:key="index">
+                                    <td><a :href="'https://fireant.vn/dashboard/content/symbols/'+item.MCK" target="_blank">{{item.MCK}}</a></td>
+                                    <th>{{item.Exchange}}</th>
+                                    <td class="text-right" v-html="htmlPrice(item.Close, item.ChangePercent)"></td>
+                                    <td class="text-right" v-html="htmlChange(item.ChangePercent)"></td>
+                                    <td class="text-right" v-html="htmlKLK(item.Volume)"></td>
+                                    <td class="text-right" v-html="htmlVol(item.TotalVolume)"></td>
+                                    <td v-html="htmlbuysel(item.Close,item.GM1,item.GB1)"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div> <!-- end card -->
+        </div>      
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function (event) {
+        var app = new Vue({
+            el: "#app",
+            data: {
+                signals: [],
+                tradings: []
+            },
+            methods: {
+                htmlVol(vol) {
+                    return `<span" class="bgvb">${vol.toLocaleString()}</span>`
+                },
+                htmlPrice(price, changePercent) {
+                    if (changePercent > 0) {
+                        return `<span style="color:rgb(0, 124, 1);" class="bgvb">${price.toLocaleString()}</span>`
+                    }
+                    else if (changePercent < 0) {
+                        return `<span style="color:#ff3737;" class="bgvb">${price.toLocaleString()}</span>`
+                    }
+                    else {
+                        return `<span style="color:#ffd900;" class="bgvb">${price.toLocaleString()}</span>`
+                    }
+                    
+                },
+                htmlKLK(klk) {
+                    return `<span class="bgvb">${klk.toLocaleString()}</span>`
+                },
+                htmlChange(changePercent) {
+                    if (changePercent > 0) {
+                        return `<span style="color:rgb(0, 124, 1);">${changePercent}%</span>`;
+                    }
+                    else if (changePercent < 0) {
+                        return `<span style="color:#ff3737;">${changePercent}%</span>`;
+                    }
+                    else {
+                        return `<span style="color:#ffd900;">${changePercent}%</span>`;
+                    }
+                },
+                htmlbuysel(Close, GM1, GB1) {
+                    if (Close == GM1) {
+                        return `<span style="color:red;font-weight:bold">B</span>`;
+                    }
+                    else if (Close == GB1) {
+                        return `<span style="color:green;font-weight:bold">M</span>`;
+                    }
+                    else {
+                        return '';
+                    }
+                }
+            },
+            created: function () {
+                // ---------
+                // Connect to our hub
+                // ---------
+                this.connection = new signalR.HubConnectionBuilder()
+                    .withUrl("https://localhost:44380/stockExchangeHub")
+                    .configureLogging(signalR.LogLevel.Information)
+                    .build();
+                this.connection.start().catch(function (err) {
+                    return console.error(err.toSting());
+                });
+            },
+            mounted: function () {
+                // ---------
+                // Call client methods from hub
+                // ---------
+                var thisVue = this;
+                thisVue.connection.on("SendSignalBuySell", function (data) {
+                    thisVue.signals = data;
+                });
+                thisVue.connection.on("TradingHistory", function (data) {
+                    thisVue.tradings = data;
+                });
+            }
+        });
+    });
+</script>

@@ -1,0 +1,32 @@
+﻿@keyframes vb {
+    0% {
+        background: none;
+    }
+
+    100% {
+        background: green;
+        color:#fff;
+        font-weight:bold;
+    }
+    0% {
+        background: none;
+    }
+}
+@keyframes vs {
+    0% {
+        background: none;
+    }
+
+    100% {
+        background: red;
+        color: #fff;
+        font-weight: bold;
+    }
+
+    0% {
+        background: none;
+    }
+}
+.text-right{
+    text-align:right;
+}

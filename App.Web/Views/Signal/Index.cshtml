@@ -1,0 +1,119 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-4 col-sm-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="responsive-table-plugin">
+                    <div class="table-wrapper">
+                        <div class="btn-toolbar"><div class="btn-group focus-btn-group"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-screenshot"></span> Focus</button></div><div class="btn-group dropdown-btn-group pull-right"><button type="button" class="btn btn-default">Display all</button><button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown">Display <span class="caret"></span></button><ul class="dropdown-menu"><li class="checkbox-row"><input type="checkbox" name="toggle-tech-companies-1-col-1" id="toggle-tech-companies-1-col-1" value="tech-companies-1-col-1"> <label for="toggle-tech-companies-1-col-1">Last Trade</label></li><li class="checkbox-row"><input type="checkbox" name="toggle-tech-companies-1-col-2" id="toggle-tech-companies-1-col-2" value="tech-companies-1-col-2"> <label for="toggle-tech-companies-1-col-2">Trade Time</label></li><li class="checkbox-row"><input type="checkbox" name="toggle-tech-companies-1-col-3" id="toggle-tech-companies-1-col-3" value="tech-companies-1-col-3"> <label for="toggle-tech-companies-1-col-3">Change</label></li><li class="checkbox-row"><input type="checkbox" name="toggle-tech-companies-1-col-4" id="toggle-tech-companies-1-col-4" value="tech-companies-1-col-4"> <label for="toggle-tech-companies-1-col-4">Prev Close</label></li><li class="checkbox-row"><input type="checkbox" name="toggle-tech-companies-1-col-5" id="toggle-tech-companies-1-col-5" value="tech-companies-1-col-5"> <label for="toggle-tech-companies-1-col-5">Open</label></li><li class="checkbox-row"><input type="checkbox" name="toggle-tech-companies-1-col-6" id="toggle-tech-companies-1-col-6" value="tech-companies-1-col-6"> <label for="toggle-tech-companies-1-col-6">Bid</label></li><li class="checkbox-row"><input type="checkbox" name="toggle-tech-companies-1-col-7" id="toggle-tech-companies-1-col-7" value="tech-companies-1-col-7"> <label for="toggle-tech-companies-1-col-7">Ask</label></li><li class="checkbox-row"><input type="checkbox" name="toggle-tech-companies-1-col-8" id="toggle-tech-companies-1-col-8" value="tech-companies-1-col-8"> <label for="toggle-tech-companies-1-col-8">1y Target Est</label></li></ul></div></div><div class="table-rep-plugin fixed-solution" data-pattern="priority-columns">
+                            <div class="table-responsive" data-pattern="priority-columns">
+                                <div class="sticky-table-header" style="height: 48.6875px; visibility: hidden; width: auto; top: -1px;">
+                                    <table id="tech-companies-1-clone" class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>MCK</th>
+                                                <th>Khối lượng khớp</th>
+                                                <th>Giá khớp</th>
+                                                <th>Tổng khối lượng</th>
+                                            </tr>
+                                        </thead>
+                                                
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div> <!-- end .table-responsive -->
+
+                        </div>
+                    </div> <!-- end .table-rep-plugin-->
+                </div> <!-- end .responsive-table-plugin-->
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8 col-sm-6">
+
+    </div>
+</div>
+
+<script src="~/lib/aspnet/signalr/dist/browser/signalr.js"></script>
+<!-- (Developer version) -->
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<div id="chatApp">
+    <div class="form-group">
+        <form>
+            <div>
+                <label for="userName">Your Name</label>
+                <input type="text" name="Name" id="userName" v-model="userName" />
+            </div>
+            <div>
+                <label for="userMessage">Message</label>
+                <input type="text"
+                       name="Message"
+                       id="userMessage"
+                       v-model="userMessage" />
+            </div>
+            <button v-on:click="submitCard" type="button">Submit</button>
+        </form>
+        <ul v-for="(item, index) in messages" v-bind:key="index + 'itemMessage'">
+            <li><b>Name: </b>{{item.user}}</li>
+            <li><b>Message: </b>{{item.message}}</li>
+        </ul>
+    </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function (event) {
+        var app = new Vue({
+            el: "#chatApp",
+            data: {
+                userName: "",
+                userMessage: "",
+                connection: "",
+                messages: []
+            },
+            methods: {
+                submitCard: function () {
+                    if (this.userName && this.userMessage) {
+                        // ---------
+                        //  Call hub methods from client
+                        // ---------
+                        this.connection
+                            .invoke("SendMessage", this.userName, this.userMessage)
+                            .catch(function (err) {
+                                return console.error(err.toSting());
+                            });
+
+                        this.userName = "";
+                        this.userMessage = "";
+                    }
+                }
+            },
+            created: function () {
+                // ---------
+                // Connect to our hub
+                // ---------
+                this.connection = new signalR.HubConnectionBuilder()
+                    .withUrl("https://localhost:44380/stockExchangeHub")
+                    .configureLogging(signalR.LogLevel.Information)
+                    .build();
+                this.connection.start().catch(function (err) {
+                    return console.error(err.toSting());
+                });
+            },
+            mounted: function () {
+                // ---------
+                // Call client methods from hub
+                // ---------
+                var thisVue = this;
+                thisVue.connection.on("ReceiveMessage", function (user, message) {
+                    debugger;
+                    thisVue.messages.push({ user, message });
+                });
+            }
+        });
+    });
+</script>
